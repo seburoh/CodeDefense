@@ -1,12 +1,14 @@
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Scanner;
 
 /**
- * TODO questions.
- * Do we have to check for output file before pw?
- * Can we assume user will not mess with outfile during timeframe?
- *
  * TODO implementation.
  * Password.
  */
@@ -35,7 +37,8 @@ public class Main {
         errorLog.append("Reached First Name Input Phase");
         System.out.println("""
                 Enter First Name.
-                Max 50 characters, alphabetic characters, and dashes only.
+                Max 50 characters, alphabetic characters, and dashes only. Dashes cannot be chained.
+                Name cannot begin or end with a dash.
                 Apologies that if you are Elon Musk's kid, you cannot use this service.""");
         String input = scn.nextLine();
         while (checkNameFailed(input)) {
@@ -47,8 +50,11 @@ public class Main {
 
 
         errorLog.append("Reached Last Name Input Phase");
-        System.out.println("Enter Last Name.\nMax 50 characters, alphabetic characters, and dashes only.");
-        input = scn.nextLine();
+        System.out.println("""
+                Enter Last Name.
+                Max 50 characters, alphabetic characters, and dashes only. Dashes cannot be chained.
+                Name cannot begin or end with a dash.
+                Apologies that if you are Elon Musk's kid, you cannot use this service.""");        input = scn.nextLine();
         while (checkNameFailed(input)) {
             printFailure("Regex did not match for last name: " + input);
             input = scn.nextLine();
@@ -98,10 +104,102 @@ public class Main {
             printFailure("File unable to be created with provided path: " + input);
             input = scn.nextLine();
         }
-        id.outputFilePath = input;
+        id.setOutputFilePath(input);
         printSuccess("Output file path has been verified.");
 
         //TODO: do password stuff
+        errorLog.append("Reached Password File Phase");
+        id.setHashedPasswordPath("hash_" + id.getCurrentTime() + ".txt");
+        System.out.println("""
+                Enter password to hash.
+                Password must contain an uppercase and lowercase letter, and a number.
+                Password must be at least 13 characters long, and may optionally contain these symbols !@#.
+                Password may not have characters repeated 3+ times in a row.
+                This will be stored in a file beginning with the name hash_.""");
+        input = scn.nextLine();
+        while (!writePassword(input, id.getHashedPasswordPath())) {
+            printFailure("Password creation failed: " + input);
+            input = scn.nextLine();
+        }
+        printSuccess("Hashed password successfully saved.");
+
+        errorLog.append("Reached Password Compare Phase");
+        System.out.println("Enter password again to compare against previously input password.");
+        input = scn.nextLine();
+        while (!comparePassword(input)) {
+            printFailure("Password compare failed: " + input);
+            input = scn.nextLine();
+        }
+        printSuccess("Hashed password successfully compared.");
+
+    }
+
+    private static boolean comparePassword(final String password) {
+        byte[] firstPassword = readPasswordFromFile(id.getHashedPasswordPath());
+        byte[] secondPassword = hashPassword(password);
+
+        return firstPassword != null && secondPassword != null && Arrays.equals(firstPassword,secondPassword);
+    }
+
+    private static boolean writePassword(final String password, final String path){
+        String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?!.*(.)\\1{2,})[A-Za-z\\d!@#]{13,}$";
+        if (password == null || !password.matches(regex)) {
+            printFailure("Password not strong enough to be saved.");
+            return false;
+        }
+
+        byte[] hashedPassword = hashPassword(password);
+
+        if (hashedPassword == null) {
+            return false;
+        }
+
+        try {
+            Files.write(Path.of(path), hashedPassword);
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return false;
+        }
+
+        return true;
+    }
+
+    private static byte[] readPasswordFromFile(final String path) {
+        byte[] retrievedPassword;
+
+        try {
+            retrievedPassword = Files.readAllBytes(Path.of(path));
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return null;
+        }
+
+        return retrievedPassword;
+    }
+
+    private static byte[] hashPassword(final String password) {
+        byte[] salt;
+        if (id.getStoredSalt() == null) {
+            SecureRandom random = new SecureRandom();
+            salt = new byte[16];
+            random.nextBytes(salt);
+            id.setStoredSalt(salt);
+        } else {
+            salt = id.getStoredSalt();
+        }
+
+        byte[] hash;
+
+        try {
+            KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            hash = factory.generateSecret(spec).getEncoded();
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return null;
+        }
+
+        return hash;
     }
 
     private static boolean writeLogFile() {
@@ -125,7 +223,7 @@ public class Main {
         outContent.append(id.toString());
 
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(id.outputFilePath));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(id.getOutputFilePath()));
             writer.write(outContent.toString());
             writer.close();
         } catch (Exception e) {
@@ -139,6 +237,10 @@ public class Main {
     private static boolean outFileExists(final String path) {
         File outFile;
 
+        if (path == null || path.length() < 5 || !path.endsWith(".txt")) {
+            return true;
+        }
+
         try {
             outFile = new File(path);
         } catch (Exception e) {
@@ -146,7 +248,8 @@ public class Main {
             return true;
         }
 
-        return outFile.getAbsolutePath().equals(id.inputFilePath) || outFile.isFile() || !path.endsWith(".txt");
+        return outFile.getAbsolutePath().equals(id.getInputFilePath())
+                || outFile.isFile() || outFile.exists();
     }
 
     private static boolean readFile(final String path) {
@@ -157,7 +260,7 @@ public class Main {
 
         BufferedReader br;
         StringBuilder sb = new StringBuilder();
-        String absPath = "";
+        String absPath;
 
         try {
 //            br = new BufferedReader(new FileReader(path));
@@ -204,7 +307,7 @@ public class Main {
     }
 
     private static boolean checkNameFailed(final String name) {
-        String regex = "(?i)^(?!-)(?!.*[-]{2})[-a-z]{1,50}(?<!-)$";
+        String regex = "(?i)^(?!-)(?!.*-{2})[-a-z]{1,50}(?<!-)$";
         return !name.matches(regex);
     }
 
@@ -213,11 +316,12 @@ public class Main {
         private String lastName;
         private int firstInt;
         private int secondInt;
-        private String hashedPassword;
+        private String hashedPasswordPath;
         private String inputFilePath;
         private String inputFileData;
         private String outputFilePath;
         private long currentTime;
+        private byte[] storedSalt;
 
         public String addNumbers() {
             return String.valueOf((long)firstInt + (long)secondInt);
@@ -237,6 +341,14 @@ public class Main {
         }
 
         /* Getters and Setters Live Here. */
+
+        public byte[] getStoredSalt() {
+            return storedSalt;
+        }
+
+        public void setStoredSalt(byte[] storedSalt) {
+            this.storedSalt = storedSalt;
+        }
 
         public long getCurrentTime() {
             return currentTime;
@@ -302,12 +414,12 @@ public class Main {
             this.secondInt = secondInt;
         }
 
-        public String getHashedPassword() {
-            return hashedPassword;
+        public String getHashedPasswordPath() {
+            return hashedPasswordPath;
         }
 
-        public void setHashedPassword(final String hashedPassword) {
-            this.hashedPassword = hashedPassword;
+        public void setHashedPasswordPath(final String hashedPasswordPath) {
+            this.hashedPasswordPath = hashedPasswordPath;
         }
     }
 }

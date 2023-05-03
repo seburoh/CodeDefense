@@ -1,93 +1,186 @@
-import java.io.BufferedReader;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Scanner;
 
+/**
+ * TODO questions.
+ * Do we have to check for output file before pw?
+ * Can we assume user will not mess with outfile during timeframe?
+ *
+ * TODO implementation.
+ * Password.
+ */
 public class Main {
 
-    private final static StringBuilder errorLog = new StringBuilder("Log File #");
+    private final static StringBuilder errorLog = new StringBuilder();
     private final static InputData id = new InputData();
 
     public static void main(String[] args) {
-        errorLog.append(System.currentTimeMillis()).append('\n');
-        userInputPhase();
+        boolean progress = true;
+        id.setCurrentTime(System.currentTimeMillis());
+        errorLog.append(id.getCurrentTime()).append('\n');
 
+        while (progress) {
+            userInputPhase();
+            progress = !writeOutFile();
+            progress &= !writeLogFile();
+        }
 
+        System.out.println("The borderland was wrapped in scarlet magic. Weebs believe that you solve this mystery");
     }
 
     private static void userInputPhase() {
         Scanner scn = new Scanner(System.in);
 
-        errorLog.append("Reached First Name Input phase\n");
-        System.out.println("Enter First Name.");
-        System.out.println("Max 50 characters, alphabetic characters, and dashes only.");
-        System.out.println("Apologies that if you are Elon Musk's kid, you cannot use this service.");
+        errorLog.append("Reached First Name Input Phase");
+        System.out.println("""
+                Enter First Name.
+                Max 50 characters, alphabetic characters, and dashes only.
+                Apologies that if you are Elon Musk's kid, you cannot use this service.""");
         String input = scn.nextLine();
         while (checkNameFailed(input)) {
             printFailure("Regex did not match for first name: " + input);
             input = scn.nextLine();
         }
         id.setFirstName(input);
-        errorLog.append("First Name Input Accepted\n");
-        printSuccess();
+        printSuccess("First Name input accepted");
 
-        errorLog.append("Reached Last Name Input phase\n");
-        System.out.println("Enter Last Name.");
-        System.out.println("Max 50 characters, alphabetic characters, and dashes only.");
+
+        errorLog.append("Reached Last Name Input Phase");
+        System.out.println("Enter Last Name.\nMax 50 characters, alphabetic characters, and dashes only.");
         input = scn.nextLine();
         while (checkNameFailed(input)) {
             printFailure("Regex did not match for last name: " + input);
             input = scn.nextLine();
         }
         id.setLastName(input);
-        errorLog.append("Last Name Input Accepted\n");
-        printSuccess();
+        printSuccess("Last Name input accepted");
 
-        errorLog.append("Reached First int Input phase\n");
-        System.out.println("Enter an integer");
-        System.out.println("Minimum value " + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE);
+
+        errorLog.append("Reached First int Input Phase");
+        System.out.println("Enter an integer.\nMinimum value "
+                + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE);
         input = scn.nextLine();
         while (testIntFailed(input)) {
-            printFailure("Value not accepted by Integer.parseInt: " + input);
+            printFailure("Value not accepted as integer: " + input);
             input = scn.nextLine();
         }
         id.setFirstInt(Integer.parseInt(input));
-        errorLog.append("First int Accepted\n");
-        printSuccess();
+        printSuccess("First int input accepted");
 
 
-        errorLog.append("Reached Second int Input phase\n");
-        System.out.println("Enter another integer");
-        System.out.println("Minimum value " + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE);
+        errorLog.append("Reached Second int Input Phase");
+        System.out.println("Enter an another integer.\nMinimum value "
+                + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE);
         input = scn.nextLine();
         while (testIntFailed(input)) {
-            printFailure("Value not accepted by Integer.parseInt: " + input);
+            printFailure("Value not accepted as integer: " + input);
             input = scn.nextLine();
         }
         id.setSecondInt(Integer.parseInt(input));
-        errorLog.append("Second int Accepted\n");
-        printSuccess();
+        printSuccess("Second int input accepted");
 
 
-        errorLog.append("Reached Input File Input phase\n");
-        System.out.println("Enter input file path");
-        System.out.println("File must be a .txt");
+        errorLog.append("Reached Input File Input Phase");
+        System.out.println("Enter input file path including file name.\nFile must be a .txt");
         input = scn.nextLine();
-        while (testIntFailed(input)) {
-            printFailure("Value not accepted by Integer.parseInt: " + input);
+        while (!readFile(input)) {
+            printFailure("File unable to be opened with provided path: " + input);
             input = scn.nextLine();
         }
-        id.setSecondInt(Integer.parseInt(input));
-        errorLog.append("Second int Accepted\n");
-        printSuccess();
+        printSuccess("Input file contents have been read.");
+
+
+        errorLog.append("Reached Output File Input Phase");
+        System.out.println("Enter path to create new output file at including file name and .txt extension.");
+        input = scn.nextLine();
+        while (outFileExists(input)) {
+            printFailure("File unable to be created with provided path: " + input);
+            input = scn.nextLine();
+        }
+        id.outputFilePath = input;
+        printSuccess("Output file path has been verified.");
+
+        //TODO: do password stuff
     }
 
-    private static BufferedReader openFile(final String path) {
-//        BufferedReader br = new BufferedReader();
-        //fails
-        return null;
-        //else
+    private static boolean writeLogFile() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("logfile_"+id.getCurrentTime()+".txt"));
+            writer.write("Log File #"+id.getCurrentTime());
+            writer.write(errorLog.toString());
+            writer.close();
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return false;
+        }
+        return true;
+    }
 
-//        return br;
+    private static boolean writeOutFile() {
+        errorLog.append("Reached OutFile write.");
+        System.out.println("Weebs are doing their best now with your file content, please watch warmly until it is ready.");
+        StringBuilder outContent = new StringBuilder();
+        outContent.append("Thank you for using Cereal Experiments Weebs Input Validator.\n");
+        outContent.append(id.toString());
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(id.outputFilePath));
+            writer.write(outContent.toString());
+            writer.close();
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return false;
+        }
+        errorLog.append("OutFile write successful.");
+        return true;
+    }
+
+    private static boolean outFileExists(final String path) {
+        File outFile;
+
+        try {
+            outFile = new File(path);
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return true;
+        }
+
+        return outFile.getAbsolutePath().equals(id.inputFilePath) || outFile.isFile() || !path.endsWith(".txt");
+    }
+
+    private static boolean readFile(final String path) {
+
+        if (path == null || path.length() < 5 || !path.endsWith(".txt")) {
+            return false;
+        }
+
+        BufferedReader br;
+        StringBuilder sb = new StringBuilder();
+        String absPath = "";
+
+        try {
+//            br = new BufferedReader(new FileReader(path));
+            File inFile = new File(path);
+            br = new BufferedReader(new FileReader(inFile));
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line).append('\n');
+                line = br.readLine();
+            }
+
+            br.close();
+            absPath = inFile.getAbsolutePath();
+
+        } catch (Exception e) {
+            errorLog.append(Arrays.toString(e.getStackTrace())).append('\n');
+            return false;
+        }
+
+        id.setInputFilePath(absPath);
+        id.setInputFileData(sb.toString());
+        return true;
     }
 
     private static boolean testIntFailed(final String input) {
@@ -100,12 +193,13 @@ public class Main {
         return false;
     }
 
-    private static void printSuccess() {
-        System.out.println("Input accepted, thank you.");
+    private static void printSuccess(final String message) {
+        System.out.println("SUCCESS: " + message);
+        errorLog.append(message).append('\n');
     }
 
     private static void printFailure(final String message) {
-        System.out.println("Input not valid, please try again.");
+        System.out.println("ERROR: " + message);
         errorLog.append(message).append('\n');
     }
 
@@ -120,7 +214,10 @@ public class Main {
         private int firstInt;
         private int secondInt;
         private String hashedPassword;
-        private String inputFileName;
+        private String inputFilePath;
+        private String inputFileData;
+        private String outputFilePath;
+        private long currentTime;
 
         public String addNumbers() {
             return String.valueOf((long)firstInt + (long)secondInt);
@@ -135,17 +232,42 @@ public class Main {
             return "First Name: " + firstName + '\n' +
                     "Last Name: " + lastName + '\n' +
                     "Added Numbers: " + addNumbers() + '\n' +
-                    "Multiplied Numbers: " + multiplyNumbers() + '\n';
+                    "Multiplied Numbers: " + multiplyNumbers() + '\n' +
+                    "Input File Contents:\n" + inputFileData + '\n';
         }
 
         /* Getters and Setters Live Here. */
 
-        public String getInputFileName() {
-            return inputFileName;
+        public long getCurrentTime() {
+            return currentTime;
         }
 
-        public void setInputFileName(final String inputFileName) {
-            this.inputFileName = inputFileName;
+        public void setCurrentTime(long currentTime) {
+            this.currentTime = currentTime;
+        }
+
+        public String getOutputFilePath() {
+            return outputFilePath;
+        }
+
+        public void setOutputFilePath(String outputFilePath) {
+            this.outputFilePath = outputFilePath;
+        }
+
+        public String getInputFileData() {
+            return inputFileData;
+        }
+
+        public void setInputFileData(String inputFileData) {
+            this.inputFileData = inputFileData;
+        }
+
+        public String getInputFilePath() {
+            return inputFilePath;
+        }
+
+        public void setInputFilePath(final String inputFileName) {
+            this.inputFilePath = inputFileName;
         }
 
         public String getFirstName() {

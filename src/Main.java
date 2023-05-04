@@ -8,15 +8,15 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Scanner;
 
-/**
- * TODO implementation.
- * Password.
- */
 public class Main {
 
     private final static StringBuilder errorLog = new StringBuilder();
     private final static InputData id = new InputData();
 
+    /**
+     * Main runtime for program. Loops until success is reached.
+     * @param args unused.
+     */
     public static void main(String[] args) {
         boolean progress = true;
         id.setCurrentTime(System.currentTimeMillis());
@@ -31,6 +31,9 @@ public class Main {
         System.out.println("The borderland was wrapped in scarlet magic. Weebs believe that you solve this mystery");
     }
 
+    /**
+     * Collects input from user and ensures sanitized.
+     */
     private static void userInputPhase() {
         Scanner scn = new Scanner(System.in);
 
@@ -54,7 +57,8 @@ public class Main {
                 Enter Last Name.
                 Max 50 characters, alphabetic characters, and dashes only. Dashes cannot be chained.
                 Name cannot begin or end with a dash.
-                Apologies that if you are Elon Musk's kid, you cannot use this service.""");        input = scn.nextLine();
+                Apologies that if you are Elon Musk's kid, you cannot use this service.""");
+        input = scn.nextLine();
         while (checkNameFailed(input)) {
             printFailure("Regex did not match for last name: " + input);
             input = scn.nextLine();
@@ -98,7 +102,10 @@ public class Main {
 
 
         errorLog.append("Reached Output File Input Phase");
-        System.out.println("Enter path to create new output file at including file name and .txt extension.");
+        System.out.println("""
+                Enter path to create new output file at including file name and .txt extension.
+                Any legal filename in your given system with at least one character is allowed.
+                If you make a dumb filename that works, that's just on you.""");
         input = scn.nextLine();
         while (outFileExists(input)) {
             printFailure("File unable to be created with provided path: " + input);
@@ -107,13 +114,12 @@ public class Main {
         id.setOutputFilePath(input);
         printSuccess("Output file path has been verified.");
 
-        //TODO: do password stuff
         errorLog.append("Reached Password File Phase");
         id.setHashedPasswordPath("hash_" + id.getCurrentTime() + ".txt");
         System.out.println("""
                 Enter password to hash.
                 Password must contain an uppercase and lowercase letter, and a number.
-                Password must be at least 13 characters long, and may optionally contain these symbols !@#.
+                Password must be at least 13 characters long, and may optionally contain these symbols: !@#
                 Password may not have characters repeated 3+ times in a row.
                 This will be stored in a file beginning with the name hash_.""");
         input = scn.nextLine();
@@ -134,6 +140,12 @@ public class Main {
 
     }
 
+    /**
+     * Compares hashed passwords to ensure equality.
+     * Retrieves original password from file on each attempt.
+     * @param password new password typed to hash and compare with.
+     * @return true if passwords are equal when hashed.
+     */
     private static boolean comparePassword(final String password) {
         byte[] firstPassword = readPasswordFromFile(id.getHashedPasswordPath());
         byte[] secondPassword = hashPassword(password);
@@ -141,6 +153,13 @@ public class Main {
         return firstPassword != null && secondPassword != null && Arrays.equals(firstPassword,secondPassword);
     }
 
+    /**
+     * Writes password to a file after hashing it.
+     * Password must be alphabetic/numeric with upper and lower case, and at least 13char. !@# optional.
+     * @param password password to hash.
+     * @param path where to put the password.
+     * @return true if successful.
+     */
     private static boolean writePassword(final String password, final String path){
         String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?!.*(.)\\1{2,})[A-Za-z\\d!@#]{13,}$";
         if (password == null || !password.matches(regex)) {
@@ -164,6 +183,11 @@ public class Main {
         return true;
     }
 
+    /**
+     * Attempts to read a hashed password from a given filepath.
+     * @param path filepath to check for password.
+     * @return hashed password if possible, null otherwise.
+     */
     private static byte[] readPasswordFromFile(final String path) {
         byte[] retrievedPassword;
 
@@ -177,6 +201,12 @@ public class Main {
         return retrievedPassword;
     }
 
+    /**
+     * Hashes a password using SHA256 and a securely generated random salt.
+     * Stores the salt only during runtime, salt is lost on program exit.
+     * @param password password to hash.
+     * @return hashed password, null if failed.
+     */
     private static byte[] hashPassword(final String password) {
         byte[] salt;
         if (id.getStoredSalt() == null) {
@@ -202,6 +232,10 @@ public class Main {
         return hash;
     }
 
+    /**
+     * Writes contents of log to a file.
+     * @return true if successful.
+     */
     private static boolean writeLogFile() {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("logfile_"+id.getCurrentTime()+".txt"));
@@ -215,6 +249,10 @@ public class Main {
         return true;
     }
 
+    /**
+     * Writes contents of user out file.
+     * @return true if successful.
+     */
     private static boolean writeOutFile() {
         errorLog.append("Reached OutFile write.");
         System.out.println("Weebs are doing their best now with your file content, please watch warmly until it is ready.");
@@ -234,6 +272,11 @@ public class Main {
         return true;
     }
 
+    /**
+     * Checks if user desired location for a new outfile is valid.
+     * @param path location to check.
+     * @return true if INVALID.
+     */
     private static boolean outFileExists(final String path) {
         File outFile;
 
@@ -252,6 +295,11 @@ public class Main {
                 || outFile.isFile() || outFile.exists();
     }
 
+    /**
+     * Reads a .txt file into a String.
+     * @param path filepath to read in.
+     * @return true if successful.
+     */
     private static boolean readFile(final String path) {
 
         if (path == null || path.length() < 5 || !path.endsWith(".txt")) {
@@ -286,6 +334,11 @@ public class Main {
         return true;
     }
 
+    /**
+     * Attempts to take user input in as an int.
+     * @param input string to turn into int.
+     * @return true if INVALID.
+     */
     private static boolean testIntFailed(final String input) {
         try {
             Integer.parseInt(input);
@@ -296,21 +349,39 @@ public class Main {
         return false;
     }
 
+    /**
+     * Prints a success message to a user and logs that message.
+     * @param message message to display and log.
+     */
     private static void printSuccess(final String message) {
         System.out.println("SUCCESS: " + message);
         errorLog.append(message).append('\n');
     }
 
+    /**
+     * Prints a failure message to a user and logs that message.
+     * @param message message to display and log.
+     */
     private static void printFailure(final String message) {
         System.out.println("ERROR: " + message);
         errorLog.append(message).append('\n');
     }
 
+    /**
+     * Checks that a given name string is valid under the given constraints.
+     * 50char max, a-z and hyphens only, no chained hyphens, no beginning/ending on a hyphen.
+     * @param name string to check.
+     * @return true if INVALID.
+     */
     private static boolean checkNameFailed(final String name) {
         String regex = "(?i)^(?!-)(?!.*-{2})[-a-z]{1,50}(?<!-)$";
         return !name.matches(regex);
     }
 
+    /**
+     * Private inner class which holds user data.
+     * Mostly getter/setter methods.
+     */
     private static class InputData {
         private String firstName;
         private String lastName;

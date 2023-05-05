@@ -20,7 +20,7 @@ public class Main {
     public static void main(String[] args) {
         boolean progress = true;
         id.setCurrentTime(System.currentTimeMillis());
-        errorLog.append("Error Log#").append(id.getCurrentTime()).append('\n');
+//        errorLog.append("Error Log#").append(id.getCurrentTime()).append('\n');
 
         while (progress) {
             userInputPhase();

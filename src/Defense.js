@@ -223,7 +223,8 @@ function numberInputPhase () {
 }
 
 function numberValidator (num) {
-    return Number.isInteger(Number(num)) && num < 2147483648 && num > -2147483649;
+    return Number.isInteger(Number(num)) && !num.includes(".")
+        && num < 2147483648 && num > -2147483649;
 }
 
 //function that goes through the first and last name inputs

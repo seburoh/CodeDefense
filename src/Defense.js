@@ -85,12 +85,12 @@ function fileOutputValidator(fileName) {
         return false;
     } else  {
         try {
-            fs.writeFileSync(fileName, data);
+            fs.writeFileSync(fileName, data, {flag: 'wx'});
         } catch (error) {
             return false
         }
     }
-
+ 
     return true;
 }
 

@@ -35,9 +35,11 @@ var InputData = {
     }
 };
 
+//public static void main(String[] args) {
 console.log("Starting program!");
 nameInputPhase();
 numberInputPhase();
+//}
 
 function numberInputPhase () {
     console.log("Enter an integer between values -2147483648 and 2147483647.");

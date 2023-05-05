@@ -1,3 +1,4 @@
+const fs = require('fs');
 const scn = require('prompt-sync')({sigint: true});
 //regex for matching a name string
 const nameRegex = RegExp("^(?!-)(?!.*-{2})[-a-zA-Z]{1,50}(?<!-)$");
@@ -36,12 +37,18 @@ var InputData = {
 };
 
 //public static void main(String[] args) {
+InputData.currentTime = Date.now();
+//ErrorLog.logData = (InputData.currentTime);
+//console.log(ErrorLog.logData);
+//console.log("Time is: " + InputData.currentTime);
+
 console.log("Starting program!");
 nameInputPhase();
 numberInputPhase();
 //}
 
 function numberInputPhase () {
+
     console.log("Enter an integer between values -2147483648 and 2147483647.");
     let num = scn("Enter a number: ");
     //if the user inputs a false name, prompt user for name again
@@ -114,4 +121,30 @@ function printSuccess(message) {
 function printFailure(message) {
     console.log("ERROR: " + message);
     ErrorLog.append("ERROR: " + message);
+}
+
+function writelogFile() {
+    
+    //try {
+        fs.writeFile('logfile_' + InputData.currentTime+'.txt','Log File #' + InputData.currentTime + '\n' + ErrorLog.logData, err => {
+            if (err) {
+                ErrorLog.append("ERROR:", e.stack);
+                return false;
+            }
+            else console.log('Data written to file successfully.');
+        });
+
+    //     return true;
+    // } catch(e) {
+    //     ErrorLog.append("ERROR", e.stack)
+    //     return false;
+    // }
+
+    // fs.writeFile('logfile' + InputData.currentTime+'.txt', 'Log File #' + InputData.currentTime, err => {
+    //     if (err) console.error(err);
+    //     else console.log('Data written to file successfully.');
+    // });
+
+    // fs.writeFile()
+
 }

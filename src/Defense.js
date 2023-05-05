@@ -38,6 +38,7 @@ var InputData = {
     }
 };
 
+//public static void main(String[] args) {
 console.log("Starting program!");
 nameInputPhase();
 numberInputPhase();

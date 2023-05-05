@@ -69,7 +69,8 @@ public class Main {
 
         errorLog.append("Reached First int Input Phase");
         System.out.println("Enter an integer.\nMinimum value "
-                + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE);
+                + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE +
+                "Decimal valued integers such as 2.0 are not allowed.");
         input = scn.nextLine();
         while (testIntFailed(input)) {
             printFailure("Value not accepted as integer: " + input);
@@ -81,7 +82,8 @@ public class Main {
 
         errorLog.append("Reached Second int Input Phase");
         System.out.println("Enter an another integer.\nMinimum value "
-                + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE);
+                + Integer.MIN_VALUE + " and maximum value " + Integer.MAX_VALUE +
+                "Decimal valued integers such as 2.0 are not allowed.");
         input = scn.nextLine();
         while (testIntFailed(input)) {
             printFailure("Value not accepted as integer: " + input);

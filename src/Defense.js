@@ -73,7 +73,7 @@ function fileOutputPhase() {
 function fileOutputValidator(fileName) {
     let data = InputData.toString();
 
-    if (!fileRegex.exec(fileName) | path.resolve(fileName) == InputData.inputFilePath) {
+    if (!fileRegex.exec(fileName) | path.resolve(fileName) == InputData.inputFilePath | !fs.existsSync(path.resolve(fileName))) {
         return false;
     } else  {
         try {

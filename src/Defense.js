@@ -201,6 +201,7 @@ function hashPassword(pw) {
 function numberInputPhase () {
     ErrorLog.append("Reached first number phase");
     console.log("Enter an integer between values -2147483648 and 2147483647.");
+    console.log("Decimal valued integers such as 2.0 are not allowed.");
     let num = scn("Enter a number: ");
     //if the user inputs a false name, prompt user for name again
     while (!numberValidator(num)) {
@@ -212,6 +213,7 @@ function numberInputPhase () {
 
     ErrorLog.append("Reached second number phase");
     console.log("Enter an integer between values -2147483648 and 2147483647.");
+    console.log("Decimal valued integers such as 2.0 are not allowed.");
     num = scn("Enter another number: ");
     //if the user inputs a false name, prompt user for name again
     while (!numberValidator(num)) {

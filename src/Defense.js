@@ -63,13 +63,13 @@ function fileInputPhase() {
     }
 
     printSuccess("Input file contents have been read.");
-
 }
 
 function fileOutputPhase() {
     ErrorLog.append("Reached Output File Input Phase");
+    console.log("Any legal filename in your given system with at least one character is allowed.");
+    console.log("If you make a dumb filename that works, that's just on you.");
     let fileName = scn("Enter output file path including file name (File must be a .txt): ");
-
     while (!fileOutputValidator(fileName)) {
         printFailure("File unable to be opened with provided path: " + fileName);
         fileName = scn("Enter another file path: ");
@@ -87,6 +87,7 @@ function fileOutputValidator(fileName) {
         try {
             fs.writeFileSync(fileName, data, {flag: 'wx'});
         } catch (error) {
+            ErrorLog.append(error.stack);
             return false
         }
     }
@@ -101,6 +102,7 @@ function fileInputValidator(fileName) {
         try {
             var f = fs.readFileSync(fileName);
         } catch (error) {
+            ErrorLog.append(error.stack);
             return false;
         }
     }
@@ -111,7 +113,6 @@ function fileInputValidator(fileName) {
 }
 
 function writelogFile() {
-    //try {
     fs.writeFile('logfile_' + InputData.currentTime+'.txt','Log File #' + InputData.currentTime + '\n' + ErrorLog.logData, err => {
         if (err) {
             ErrorLog.append("ERROR:", e.stack);
@@ -131,7 +132,6 @@ function passwordInputPhase() {
     console.log("Password may not have characters repeated 3+ times in a row.");
     console.log("This will be stored in a file beginning with the name hash_.");
     let pw = scn("Password: ");
-    //if the user inputs a false name, prompt user for name again
     while (!writePassword(pw, InputData.hashedPasswordPath)) {
         printFailure("Password creation failed: " + pw);
         pw = scn("Please try again: ");

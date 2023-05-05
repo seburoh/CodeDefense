@@ -1,6 +1,9 @@
 const scn = require('prompt-sync')({sigint: true});
+const fs = require('fs');
+const path = require('path');
 //regex for matching a name string
 const nameRegex = RegExp("^(?!-)(?!.*-{2})[-a-zA-Z]{1,50}(?<!-)$");
+const fileRegex = RegExp("^.+\.txt$");
 
 var ErrorLog = {
     logData : "",
@@ -21,23 +24,82 @@ var InputData = {
     currentTime : "",
     storedSalt : "",
     addNumbers : function() {
-        return firstInt + secondInt;
+        return this.firstInt + this.secondInt;
     },
     multiplyNumbers : function() {
-        return firstInt * secondInt;
+        return this.firstInt * this.secondInt;
     },
     toString : function() {
-        return "First Name: " + firstName + '\n' +
-        "Last Name: " + lastName + '\n' +
-        "Added Numbers: " + addNumbers() + '\n' +
-        "Multiplied Numbers: " + multiplyNumbers() + '\n' +
-        "Input File Contents:\n" + inputFileData + '\n';
+        return "First Name: " + this.firstName + '\n' +
+        "Last Name: " + this.lastName + '\n' +
+        "Added Numbers: " + this.addNumbers() + '\n' +
+        "Multiplied Numbers: " + this.multiplyNumbers() + '\n' +
+        "Input File Contents:\n" + this.inputFileData + '\n';
     }
 };
 
 console.log("Starting program!");
 nameInputPhase();
 numberInputPhase();
+fileInputPhase();
+fileOutputPhase();
+
+function fileInputPhase() {
+    ErrorLog.append("Reached Input File Input Phase");
+    let fileName = scn("Enter input file path including file name (File must be a .txt): ");
+
+    while (!fileInputValidator(fileName)) {
+        printFailure("File unable to be opened with provided path: " + fileName);
+        fileName = scn("Enter another file path: ");
+    }
+
+    printSuccess("Input file contents have been read.");
+
+}
+
+function fileOutputPhase() {
+    ErrorLog.append("Reached Output File Input Phase");
+    let fileName = scn("Enter output file path including file name (File must be a .txt): ");
+
+    while (!fileOutputValidator(fileName)) {
+        printFailure("File unable to be opened with provided path: " + fileName);
+        fileName = scn("Enter another file path: ");
+    }
+
+    printSuccess("Output file contents have been written.");
+}
+
+function fileOutputValidator(fileName) {
+    let data = InputData.toString();
+
+    if (!fileRegex.exec(fileName) | path.resolve(fileName) == InputData.inputFilePath) {
+        return false;
+    } else  {
+        try {
+            fs.writeFileSync(fileName, data);
+        } catch (error) {
+            return false
+        }
+    }
+
+    return true;
+}
+
+function fileInputValidator(fileName) {
+    if (!fileRegex.exec(fileName)) {
+        return false;
+    } else {
+        try {
+            var f = fs.readFileSync(fileName);
+        } catch (error) {
+            return false;
+        }
+    }
+
+    InputData.inputFileData = f;
+    InputData.inputFilePath = path.resolve(fileName);
+    return true;
+}
 
 function numberInputPhase () {
     console.log("Enter an integer between values -2147483648 and 2147483647.");
